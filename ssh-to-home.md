@@ -23,19 +23,41 @@ Hence, the following setup for SSH and Wake-on-LAN with dynamic DNS.
    `Wake-on: g`. If not, set it with `sudo ethtool -s <eth> wol g` and make it
    [persistent](https://wiki.archlinux.org/index.php/Wake-on-LAN#cron).
 3. You should be able to wake the desktop up from another computer on the same
-   LAN: `sudo apt install wakeonlan; wakeonlan <MAC address>`. Get the MAC
-   address of the desktop's ethernet device with `ifconfig`.
+   LAN: `sudo apt install wakeonlan; wakeonlan <MAC-addr>`. Get the MAC address
+   of the desktop's ethernet device with `ifconfig`.
 
 ## Access from outside world
 
 1. Give a static IP address to the desktop in the router.
-2. Forward TCP port 22 for SSH and UDP port 9 for WOL.
+2. Forward TCP port 22 for SSH and UDP port 9 for WOL from the internet to the desktop.
 3. Get a [dynamic DNS](https://duckdns.org). My router can send updates to the
    service, or you have some other device on your LAN (a Raspberry Pi, for
    example) send updates.
-4. Now, you should be able to `ssh subdomain.duckdns.org` and `wakeonlan -i
-   subdomain.duckdns.org <MAC address>`.
+4. Now, you should be able to `wakeonlan -i subdomain.duckdns.org <MAC-addr>`
+   and then, `ssh subdomain.duckdns.org`.
 
-## To do
+## Router issues
 
-1. Use Raspberry Pi or similar device to authenticate WOL request.
+It turns out that my router forgets the MAC address of the desktop some time
+after the desktop has been shut down (ARP caches typically hold entries for 30
+seconds only.) This is in spite of the fact that the router assigns a static IP
+to the desktop based on its MAC address. The upshot of this is that the router
+can forward WOL requests to the desktop only when the desktop is running (and
+about 30 seconds after it has been shut down.)
+
+One solution is to forward UDP port 9 to the broadcast IP on the LAN, but my
+router does not allow that.
+
+Hence, I use an always-on Beaglebone Black (BBB) on the LAN to send the WOL. I
+start an SSH server on the BBB and forward it to the internet on port 9022. Now
+I can do:
+
+```
+ssh -p 9022 subdomain.duckdns.org wakeonlan <MAC-addr>
+# wait for desktop to wake up
+ssh subdomain.duckdns.org
+```
+
+This has the benefit that the WOL request is authenticated. As on the desktop,
+use appropriate security on the BBB (disabling password authentication, for
+example.)
