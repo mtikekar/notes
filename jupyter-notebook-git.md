@@ -8,7 +8,7 @@ This setup
 ## Global setup
 
 1. Install git lfs for your system. e.g. `brew install git-lfs` on MacOS with Homebrew.
-2. Run: `git config --global diff.ipynb.textconv jupyter nbconvert --to markdown --stdout --log-level=0 --no-prompt --TemplateExporter.exclude_output=True`
+2. Run: `git config --global diff.ipynb.textconv jupyter nbconvert --to markdown --stdout --log-level=0 --ClearOutputPreprocessor.enabled=True`
 3. Run: `git config --global filter.ipynb.clean jupyter nbconvert --to notebook --stdin --stdout --log-level=0 --ClearOutputPreprocessor.enabled=True`
 
 ## Per-repo setup
