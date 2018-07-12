@@ -61,3 +61,10 @@ swap the order of the corresponding lines in `.gitattributes`.
 
 - `git lfs ls-files` should list all the checkpoint files that you previously
   added to git.
+
+## Known Issues
+
+- jupyter nbconvert is slow (maybe best way to fix this is to use jq)
+- Due to mismatch between the clean and diff filters, git status may signal a
+  difference that git diff does not show. It seems that the only way to avoid
+  this problem for sure is to use the same filter for clean and diff.
