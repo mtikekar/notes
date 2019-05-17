@@ -56,9 +56,10 @@ conda create -n tf python=3.6 # or -p path/to/tf/env
 conda activate tf # or source activate tf
 conda install matplotlib ipykernel tensorboard
 conda install --only-deps tensorflow-base cudnn=7.1.2 cudatoolkit=9.0
-pip install tensorflow-gpu
-pip install keras # optional
+pip install tensorflow-gpu==1.12.2
 ```
+
+This also supports TensorFlow 1.13.1 with CUDA 10. Use `cudnn=7.3.1 cudatoolkit=10.0` and `tensorflow==1.13.1`.
 
 The following python code should now run:
 
