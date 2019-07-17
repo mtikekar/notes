@@ -64,7 +64,82 @@ swap the order of the corresponding lines in `.gitattributes`.
 
 ## Known Issues
 
-- jupyter nbconvert is slow (maybe best way to fix this is to use jq)
+- jupyter nbconvert is slow (see faster scripts below)
 - Due to mismatch between the clean and diff filters, git status may signal a
   difference that git diff does not show. It seems that the only way to avoid
   this problem for sure is to use the same filter for clean and diff.
+
+
+## Faster textconv and clean (potentially unsafe)
+
+The following scripts are much faster than nbconvert but do not perform any
+checks that nbconvert does.  The textconv script is safe to use as it is only
+produces text for us to read. However, the clean script changes what gets saved
+in the repo. I ran a single test to check that the clean script produces the
+same output as the nbconvert command, but use it at your own risk!
+
+I also intended for the two scripts to match so that git status and git diff do
+not contradict each other.
+
+textconv:
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+src_prefixes = {"code": "", "markdown": "# ", "raw": "r "}
+
+def dump(obj):
+    if obj:
+        json.dump(obj, sys.stdout, indent=1, ensure_ascii=False, check_circular=False)
+        print()
+
+nb = json.load(open(sys.argv[1]))
+
+for cell in nb.pop("cells"):
+    cell_type = cell.pop("cell_type")
+    prefix = src_prefixes[cell_type]
+
+    src = cell.pop("source")
+    if isinstance(src, list):
+        src = prefix.join(src)
+    src = prefix + src
+
+    if cell_type == "code":
+        cell.pop("outputs", None)
+        cell.pop("execution_count", None)
+        if "metadata" in cell:
+            m = cell["metadata"]
+            m.pop("collapsed", None)
+            m.pop("scrolled", None)
+            if not m:
+                cell.pop("metadata")
+
+    dump(cell)
+    print(src, end="\n\n")
+
+dump(nb)
+```
+
+clean:
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+nb = json.load(sys.stdin)
+
+for cell in nb["cells"]:
+    if cell["cell_type"] == "code":
+        cell["outputs"] = []
+        cell["execution_count"] = None
+        if "metadata" in cell:
+            m = cell["metadata"]
+            m.pop("collapsed", None)
+            m.pop("scrolled", None)
+
+json.dump(nb, sys.stdout, indent=1, ensure_ascii=False, check_circular=False)
+print()
+```
