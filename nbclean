@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+import json
+import sys
+
+nb = json.load(sys.stdin)
+
+for cell in nb["cells"]:
+    if cell["cell_type"] == "code":
+        cell["outputs"] = []
+        cell["execution_count"] = None
+        if "metadata" in cell:
+            m = cell["metadata"]
+            m.pop("collapsed", None)
+            m.pop("scrolled", None)
+
+json.dump(nb, sys.stdout, indent=1, ensure_ascii=False, check_circular=False)
+print()
