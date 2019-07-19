@@ -65,10 +65,9 @@ swap the order of the corresponding lines in `.gitattributes`.
 ## Known Issues
 
 - jupyter nbconvert is slow (see faster scripts below)
-- Due to mismatch between the clean and diff filters, git status may signal a
-  difference that git diff does not show. It seems that the only way to avoid
-  this problem for sure is to use the same filter for clean and diff.
-
+- git status does not seem to use the clean or diff scripts. So it may show a
+  notebook as modified even if nothing material changed (e.g. only outputs
+  changed). Running `git add` will fix this.
 
 ## Faster textconv and clean (potentially unsafe)
 
