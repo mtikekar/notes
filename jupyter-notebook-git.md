@@ -78,4 +78,9 @@ a single test to check that the clean script produces the same output as
 nbconvert, but use it at your own risk!
 
 I also intended for the two scripts to match with each other so that git status
-and git diff do not contradict each other.
+and git diff do not contradict each other. The complete installation is as follows:
+
+1. Symlink `nb2txt` and `nbclean` into some place on PATH e.g. ~/.local/bin
+2. `echo '*.ipynb diff=ipynb filter=ipynb' >> ~/.config/git/attributes`
+3. `git config --global diff.ipynb.textconv nb2txt`
+4. `git config --global filter.ipynb.clean nbclean`
