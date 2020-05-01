@@ -1,27 +1,26 @@
 # Building a Python package with C/C++ extensions
 
-Extensions are just libraries that are dynamically loaded by Python. But not all libraries bundled with a Python package are extensions. The different types of libraries are:
+Extensions are just libraries that are dynamically loaded by Python. But not all libraries bundled with a Python package are extensions. Depending on the use-cases listed below, each library may need to be compiled and linked differently.
 
-1. Python extensions - python will `import ext` if `ext.cpython-36m-x86_64-linux-gnu.so` (middle part can be different) exists wherever `ext.py` was expected. There are libraries like `pybind11`, `cffi`, `cython` , `boost.python` that can make it easy to wrap a C/C++ library into a Python extension.
-2. C/C++ library required by a python extension. Typically the library that is being wrapped into Python.
+1. Python extensions - python can `import` a library as a Python module if defines a function `PyInit_<modulename>`. There are libraries such as `pybind11`, `cffi`, `cython`, `boost.python` that can make it easy to wrap a C/C++ library into a Python extension. But this note is not about how to write the extension or wrappers, but about how to build them.
+2. C/C++ library required by a python extension. Typically, this is the library that is being wrapped into Python.
 3. C/C++ library that is not a python extension but needs to be linked to libpython anyway - maybe some of the C/C++ to Python interface code got leaked into that library.
-4. C/C++ library with or without libpython linked that needs to also be available to external programs to link against. 4 is not so different from 2.
+4. C/C++ library with or without libpython linked that also needs to be available to external programs to link against. 4 is not so different from 2.
 5. Python extension that needs to be available to external programs to link against.
 
 
-
-Use-case 1 and 2 are common. Use-case 4 is in [cocotb](https://github.com/cocotb/cocotb) which also has 1, 2, 3. I haven't seen use-case 5.
-
+Use-case 1 and 2 are common. Use-case 4 is in [cocotb](https://github.com/cocotb/cocotb) which also has 1, 2, 3. I haven't seen use-case 5. In principle, 3 and 4 are not so different from 1 and 2 but there are some OS-specific quirks to be aware of when building them.
 
 
 ## Relocatability
 
 To distribute pre-built packages to users, the libraries should use relative paths to look for their local dependencies i.e. other libraries in the same package.
 
-- Linux: use `$ORIGIN` in rpath (e.g. with `-Wl,-rpath,$ORIGIN` as gcc flag). Test with `ldd`
-- MacOS: use `@loader_path `  in rpath and `@rpath` in `install_name` of libraries. Use `otool -L` and `otool -l exe_or_lib | grep -A2 LC_RPATH` to see if they're correctly set. Can also use env vars `DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_LIBRARIES_POST_LAUNCH=1 DYLD_PRINT_RPATHS=1` at run-time.
+- Linux: use `$ORIGIN` in rpath (e.g. with `-Wl,-rpath,$ORIGIN` as gcc flag). `ldd` is a useful diagnostic tool to see if dependencies are being found correctly. In a pinch, `patchelf` can be used to view and modify `rpath` post-build.
+- macOS: use `@loader_path ` in rpath and `@rpath` in `install_name` of libraries. Use `otool -L` and `otool -l exe_or_lib | grep -A2 LC_RPATH` to see if they're correctly set. Can also use env vars `DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_LIBRARIES_POST_LAUNCH=1 DYLD_PRINT_RPATHS=1` at run-time. `install_name_tool` is the equivalent of `patchelf`.
 - Windows: `%PATH%` environment variable works or use `AddDllDirectory()` (wrapped as `os.add_dll_directory` in Python)
 
+On macOS, `@loader_path` is sometimes used instead of `@rpath` in the `install_name` of a library. This works, but only if all the libraries that link to it are in the same directory. Using `@rpath` in `install_name` and `@loader_path` in `rpath` is more general. See [this post](https://medium.com/@donblas/fun-with-rpath-otool-and-install-name-tool-e3e41ae86172) to learn more about library resolution on macOS.
 
 
 ## Tools for building Python extensions
@@ -50,7 +49,7 @@ In principle, we just need to know the full paths to `Python.h` and `libpython<v
 
 Unfortunately, there is no standard platform-independent method to find the libpython for a python executable. To get the directory, see these [answers](https://stackoverflow.com/questions/47423246/get-pythons-lib-path) for how numpy, cmake and scikit-build do it, and this [300 line code](https://github.com/JuliaPy/PyCall.jl/blob/master/deps/find_libpython.py) for embedding Python in Julia. For now, I'm inclined to try numpy's simple method: `sys.prefix + '/libs' if windows else sysconfig.get_config_var('LIBDIR')`
 
-The library name to link against can be gotten from `sysconfig.get_config_var("LDLIBRARY")` (except for Mac quirk below).
+The library name to link against can be gotten from `sysconfig.get_config_var("LDLIBRARY")` (except for macOS quirk below).
 
 
 
@@ -60,7 +59,7 @@ The library name to link against can be gotten from `sysconfig.get_config_var("L
 
 
 
-**Mac quirks**
+**macOS quirks**
 
 - OS and Homebrew python are linked against Python Framework, so `LDLIBRARY` is `Python.framework/Versions/<version>/Python`. You can use `LIBRARY` and replace `.a` with `.dylib`
 
@@ -69,7 +68,7 @@ The library name to link against can be gotten from `sysconfig.get_config_var("L
 
 Note: `python -m sysconfig | grep LDSHARED` gives the link flags to use for an extension. Look for `-bundle -undefined dynamic_lookup`
 
-Due to the 3rd point, it is hard to get use-case 3 working on Mac reliably. The flags that are used for linking an extension (which is what `distutils/sysconfig` provide) cannot be used to link a library with libpython. We have to resort to finding libpython independently.
+Due to the 3rd point, it is hard to get use-case 3 working on macOS reliably. The flags that are used for linking an extension (which is what `distutils/sysconfig` provide) cannot be used to link a library with libpython. We have to resort to finding libpython independently.
 
 
 
