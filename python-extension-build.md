@@ -33,9 +33,9 @@ On macOS, `@loader_path` is sometimes used instead of `@rpath` in the `install_n
 
 - [setuptools_dso](https://github.com/mdavidsaver/setuptools_dso) - provides an easy way to build libraries that aren't extensions (use-case 2). It will analyse the dependencies to set the right `rpath` flags. Unfortunately, it doesn't handle use-case 3, but it should be possible to add to it. It is also a relatively small module (600 lines over 2 files), so it can just be copied into your project to avoid the hassles of a build-time dependency.
 
-- CMake - has a FindPython feature. pybind11 also has CMake integration. See [polygames](https://github.com/facebookincubator/Polygames) for example. 
+- CMake - has a FindPython feature. pybind11 also has CMake integration. See [polygames](https://github.com/facebookincubator/Polygames) for example. Getting pip install to work is a simple matter of calling `cmake` in `setup.py` like [so](https://github.com/pybind/cmake_example/blob/master/setup.py).
 
-- Make - in principle, you only need the compile and link flags from Python. You can do the rest yourself. See [this]( http://notes.secretsauce.net/notes/2017/11/14_python-extension-modules-without-setuptools-or-distutils.html) for example.
+- Make - in principle, you only need the compile and link flags from Python. You can do the rest yourself. See [this]( http://notes.secretsauce.net/notes/2017/11/14_python-extension-modules-without-setuptools-or-distutils.html) for example. Make can be integrated with pip in the same way as CMake above.
 
 - Conda - provides packages for compilers, make, cmake and many other system libraries which enables having a consistent build environment. I typically use conda for my development/test/build environment but build the package with pip. 
 
