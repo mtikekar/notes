@@ -25,25 +25,25 @@ On macOS, `@loader_path` is sometimes used instead of `@rpath` in the `install_n
 
 ## Tools for building Python extensions
 
-- distutils - comes built into Python. It basically knows the right compile and link flags to use and does the build and install steps. The flags and paths can be gotten from `sysconfig.get_config_vars` and `get_paths` functions  or from `python -m sysconfig` on the command-line. However, not all config_vars are available on all OSes/distributions (e.g. `LIBDIR` is not available on Windows). 
+- distutils - comes built into Python. It basically knows the right compile and link flags for building an extension and does the build and install steps. The flags and paths can be gotten from `sysconfig.get_config_vars` and `get_paths` functions  or from `python -m sysconfig` on the command-line. However, `config_vars` are not consistent across OSes/distributions (e.g. `LIBDIR` is not available on Windows).
 
   Other tools builds on top of distutils. In principle, distutils is all that is needed to run `python setup.py install|build|develop`, but python docs recommend using setuptools instead of distutils.
 
 - setuptools - comes with pip. pip will automatically inject setuptools in place of distutils in your setup.py.  pip also installs dependencies. `pip >= 19` also supports build-time dependencies through `pyproject.toml`. This is especially needed if `setup.py` imports the build-time dependency and so cannot be parsed to get `setup_requires` from that file.
 
-- [setuptools_dso](https://github.com/mdavidsaver/setuptools_dso) - provides an easy way to build libraries that aren't extensions (use-case 2). It will analyse the dependencies to set the right `rpath` flags. Unfortunately, it doesn't handle use-case 3, but it should be possible to add to it. It is also a relatively small module (600 lines over 2 files), so it can just be copied into your project to avoid the hassles of a build-time dependency.
+- [setuptools_dso](https://github.com/mdavidsaver/setuptools_dso) - extends setuptools to build libraries that aren't extensions (use-case 2). It basically uses the extension-building machinery from setuptools/distutils but strips out the Python-specific flags. It will also analyse the inter-dependencies to set the right `rpath` flags. Unfortunately, it doesn't handle use-case 3 yet, but that can potentially be added to it. It is also a relatively small module (600 lines over 2 files), so it can just be copied into your project to avoid the hassles of a build-time dependency. Avoiding the make or cmake requirement makes it attractive for Windows.
 
 - CMake - has a FindPython feature. pybind11 also has CMake integration. See [polygames](https://github.com/facebookincubator/Polygames) for example. Getting pip install to work is a simple matter of calling `cmake` in `setup.py` like [so](https://github.com/pybind/cmake_example/blob/master/setup.py).
 
 - Make - in principle, you only need the compile and link flags from Python. You can do the rest yourself. See [this]( http://notes.secretsauce.net/notes/2017/11/14_python-extension-modules-without-setuptools-or-distutils.html) for example. Make can be integrated with pip in the same way as CMake above.
 
-- Conda - provides packages for compilers, make, cmake and many other system libraries which enables having a consistent build environment. I typically use conda for my development/test/build environment but build the package with pip. 
+- Conda - provides packages for compilers, make, cmake and many system libraries which enables having a consistent build environment. I typically use conda for my development/test/build environment but build the package with pip.
 
 
 
 ## Finding the right compile/link flags
 
-In principle, we just need to know the full paths to `Python.h` and `libpython<version>.<a/so/dll/dylib>`. As far as I can tell, there are no special compile or link flags needed for building a Python extension. 
+In principle, we just need to know the full paths to `Python.h` and `libpython<version>.<a/so/dll/dylib>`. As far as I can tell, there are no special compile or link flags needed for building a Python extension.
 
 `Python.h` is always at `sysconfig.get_path("include")` if it exists. On Linux, if you're using the system python, you need to install the development package.
 
