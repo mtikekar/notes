@@ -33,6 +33,8 @@ On macOS, `@loader_path` is sometimes used instead of `@rpath` in the `install_n
 
 - [setuptools_dso](https://github.com/mdavidsaver/setuptools_dso) - extends setuptools to build libraries that aren't extensions (use-case 2). It basically uses the extension-building machinery from setuptools/distutils but strips out the Python-specific flags. It will also analyse the inter-dependencies to set the right `rpath` flags. Unfortunately, it doesn't handle use-case 3 yet, but that can potentially be added to it. It is also a relatively small module (600 lines over 2 files), so it can just be copied into your project to avoid the hassles of a build-time dependency. Avoiding the make or cmake requirement makes it attractive for Windows.
 
+- python3-config - this is a simple script that comes built into Python. It uses `sysconfig` to provide a `pkg-config` style CLI, e.g. `python3-config --cflags`, `python3-config --ldflags` print the compile and link flags to use. These can be used to build an extension without using distutils.
+
 - CMake - has a FindPython feature. pybind11 also has CMake integration. See [polygames](https://github.com/facebookincubator/Polygames) for example. Getting pip install to work is a simple matter of calling `cmake` in `setup.py` like [so](https://github.com/pybind/cmake_example/blob/master/setup.py).
 
 - Make - in principle, you only need the compile and link flags from Python. You can do the rest yourself. See [this]( http://notes.secretsauce.net/notes/2017/11/14_python-extension-modules-without-setuptools-or-distutils.html) for example. Make can be integrated with pip in the same way as CMake above.
