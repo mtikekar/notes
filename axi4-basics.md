@@ -36,7 +36,7 @@ The basic building block of the AXI4 protocol is a single-cycle transfer of data
 
 valid:
  - Must be low in reset.
- - Once asserted, valid must remain high until the transfer happens.
+ - Once asserted, valid must remain high until the transfer happens. The data being transferred must also remain unchanged during this time.
  - Must not depend on ready.
 
 ready:
