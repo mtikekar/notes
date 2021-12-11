@@ -192,3 +192,9 @@ the data transferred on the bus will have the following addresses on the 5 beats
 ### WRAP bursts
 
 The address increment logic for WRAP bursts can be explained as follows. For a transaction size of `TS = (AxLEN + 1) << AxSIZE`, split the address space into TS-byte chunks aligned to TS i.e. 0 to TS-1, TS to 2TS-1, 2TS to 3TS-1, .... Find the chunk that contains AxADDR and start reading from/writing to AxADDR and incrementing by `1 << AxSIZE` every beat. If you reach the end of the chunk before you reach the end of the burst, wrap around to the start of the chunk and read until AxADDR - 1.
+
+The starting address of the chunk is `AxADDR - (AxADDR % TS)` and the offset within the chunk for the i'th beat is `(AxADDR + (i << AxSIZE)) % TS` giving the beat address as:
+
+```
+i'th beat address = AxADDR - (AxADDR % TS) + (AxADDR + (i << AxSIZE)) % TS
+```
